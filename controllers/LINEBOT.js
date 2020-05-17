@@ -20,6 +20,8 @@ router.post('/linebot/webhook', line.middleware(config), (req, res) => {
     Promise
         .all(req.body.events.map(handleEvent))
         .then((result) => res.json(result));
+    
+    res.sendStatus(200); // for testing Webhook Verify
 });
 
 function handleEvent(event) {
