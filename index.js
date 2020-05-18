@@ -7,7 +7,9 @@ const config = {
 };
 
 const app = express();
-app.post('/linebot/webhook', line.middleware(config), (req, res) => {
+// app.post('/linebot/webhook', line.middleware(config), (req, res) => {
+app.post('/webhook', line.middleware(config), (req, res) => {
+
     Promise
         .all(req.body.events.map(handleEvent))
         .then((result) => res.json(result));
@@ -21,7 +23,7 @@ function handleEvent(event) {
     if (event.type !== 'message' || event.message.type !== 'text') {
         return Promise.resolve(null);
     }
-
+console.log("Testing here!");
     return client.replyMessage(event.replyToken, {
         type: 'text',
         text: event.message.text
