@@ -1,51 +1,31 @@
-// const express = require('express');
-// const linebot = require('./controllers/LINEBOT');
-
-// const app = express();
-
-// app.use('/', linebot);
-
 const express = require('express');
-const bodyParser = require('body-parser');
-const request = require('request');
+const line = require('@line/bot-sdk');
+
+const config = {
+    channelAccessToken: 'cyNaR/BGrcuuc/AWK9TGrZ0nHbZN2nBOIAbVmn6TsbMIVZQzm+u1swGWFr8UpKVNhF2GIhYWAKI0TQi7CjYYM//R08r2iuPiI/5nkMxWOXf7OG+WaVyIC/1tpJuwz6eemIoQryMErjz42XwGAi/KSQdB04t89/1O/w1cDnyilFU=',
+    channelSecret: 'bbaf3fd52698fed2d164975d96c7edc8'
+};
 
 const app = express();
-const port = process.env.PORT || 4000;
-
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json());
-
-app.post('/linebot/webhook', (req, res) => {
-    let reply_token = req.body.events[0].replyToken;
-    reply_token(reply_token);
-    res.sendStatus(200)
+app.post('/linebot/webhook', line.middleware(config), (req, res) => {
+    Promise
+        .all(req.body.events.map(handleEvent))
+        .then((result) => res.json(result));
+        // testing - to be deleted
+        res.sendStatus(200)
 });
 
-app.listen(port);
+const client = new line.Client(config);
 
-function reply(reply_token) {
-    let headers = {
-        'Content-Type' : 'application/json',
-        'Authorization' : 'Bearer {cyNaR/BGrcuuc/AWK9TGrZ0nHbZN2nBOIAbVmn6TsbMIVZQzm+u1swGWFr8UpKVNhF2GIhYWAKI0TQi7CjYYM//R08r2iuPiI/5nkMxWOXf7OG+WaVyIC/1tpJuwz6eemIoQryMErjz42XwGAi/KSQdB04t89/1O/w1cDnyilFU=}'
-    };
+function handleEvent(event) {
+    if (event.type !== 'message' || event.message.type !== 'text') {
+        return Promise.resolve(null);
+    }
 
-    let body = JSON.stringify({
-        replyToken : reply_token,
-        messages : [{
-            type : 'text',
-            text : 'Hello'
-        },
-        {
-            type : 'text',
-            text : 'How are you?'
-        }]
-    });
-
-    request.post({
-        url : 'https://api.line.me/v2/bot/message/reply',
-        headers : headers,
-        body : body
-    }, (err, res, body) => {
-        console.log('status = '+res.statusCode);
+    return client.replyMessage(event.replyToken, {
+        type: 'text',
+        text: event.message.text
     });
 }
+
+app.listen(3000);
